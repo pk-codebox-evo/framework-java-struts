@@ -216,7 +216,11 @@ public class Dispatcher {
      */
     @Inject(StrutsConstants.STRUTS_DEVMODE)
     public void setDevMode(String mode) {
-        devMode = "true".equals(mode);
+        devMode = Boolean.parseBoolean(mode);
+    }
+
+    public boolean isDevMode() {
+        return devMode;
     }
 
     /**
@@ -268,6 +272,10 @@ public class Dispatcher {
     @Inject(StrutsConstants.STRUTS_HANDLE_EXCEPTION)
     public void setHandleException(String handleException) {
         this.handleException = Boolean.parseBoolean(handleException);
+    }
+
+    public boolean isHandleException() {
+        return handleException;
     }
 
     @Inject
@@ -564,6 +572,7 @@ public class Dispatcher {
             logConfigurationException(request, e);
             sendError(request, response, HttpServletResponse.SC_NOT_FOUND, e);
         } catch (Exception e) {
+            e.printStackTrace();
             if (handleException || devMode) {
                 sendError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
             } else {
@@ -610,7 +619,7 @@ public class Dispatcher {
         Map requestMap = new RequestMap(request);
 
         // parameters map wrapping the http parameters.  ActionMapping parameters are now handled and applied separately
-        Map params = new HashMap(request.getParameterMap());
+        HttpParameters params = HttpParameters.create(request.getParameterMap()).build();
 
         // session map wrapping the http session
         Map session = new SessionMap(request);
@@ -631,7 +640,7 @@ public class Dispatcher {
      * <tt>Action</tt> context.
      *
      * @param requestMap     a Map of all request attributes.
-     * @param parameterMap   a Map of all request parameters.
+     * @param parameters     an Object of all request parameters.
      * @param sessionMap     a Map of all session attributes.
      * @param applicationMap a Map of all servlet context attributes.
      * @param request        the HttpServletRequest object.
@@ -641,13 +650,13 @@ public class Dispatcher {
      * @since 2.3.17
      */
     public HashMap<String,Object> createContextMap(Map requestMap,
-                                    Map parameterMap,
+                                    HttpParameters parameters,
                                     Map sessionMap,
                                     Map applicationMap,
                                     HttpServletRequest request,
                                     HttpServletResponse response) {
         HashMap<String, Object> extraContext = new HashMap<>();
-        extraContext.put(ActionContext.PARAMETERS, new HashMap(parameterMap));
+        extraContext.put(ActionContext.PARAMETERS, parameters);
         extraContext.put(ActionContext.SESSION, sessionMap);
         extraContext.put(ActionContext.APPLICATION, applicationMap);
 
@@ -668,7 +677,7 @@ public class Dispatcher {
         extraContext.put("request", requestMap);
         extraContext.put("session", sessionMap);
         extraContext.put("application", applicationMap);
-        extraContext.put("parameters", parameterMap);
+        extraContext.put("parameters", parameters);
 
         AttributeMap attrMap = new AttributeMap(extraContext);
         extraContext.put("attr", attrMap);

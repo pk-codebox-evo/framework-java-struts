@@ -26,10 +26,13 @@ import com.opensymphony.xwork2.inject.Container;
 import com.opensymphony.xwork2.inject.Inject;
 import com.opensymphony.xwork2.interceptor.AbstractInterceptor;
 import com.opensymphony.xwork2.interceptor.ValidationAware;
+import com.opensymphony.xwork2.util.LocalizedTextUtil;
 import com.opensymphony.xwork2.util.TextParseUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.struts2.ServletActionContext;
+import org.apache.struts2.dispatcher.LocalizedMessage;
+import org.apache.struts2.dispatcher.Parameter;
 import org.apache.struts2.dispatcher.multipart.MultiPartRequestWrapper;
 import org.apache.struts2.util.ContentTypeMatcher;
 
@@ -255,9 +258,9 @@ public class FileUploadInterceptor extends AbstractInterceptor {
         MultiPartRequestWrapper multiWrapper = (MultiPartRequestWrapper) request;
 
         if (multiWrapper.hasErrors()) {
-            for (String error : multiWrapper.getErrors()) {
+            for (LocalizedMessage error : multiWrapper.getErrors()) {
                 if (validation != null) {
-                    validation.addActionError(error);
+                    validation.addActionError(LocalizedTextUtil.findText(error.getClazz(), error.getTextKey(), ActionContext.getContext().getLocale(), error.getDefaultMessage(), error.getArgs()));
                 }
             }
         }
@@ -294,11 +297,11 @@ public class FileUploadInterceptor extends AbstractInterceptor {
                         }
 
                         if (!acceptedFiles.isEmpty()) {
-                            Map<String, Object> params = ac.getParameters();
-
-                            params.put(inputName, acceptedFiles.toArray(new File[acceptedFiles.size()]));
-                            params.put(contentTypeName, acceptedContentTypes.toArray(new String[acceptedContentTypes.size()]));
-                            params.put(fileNameName, acceptedFileNames.toArray(new String[acceptedFileNames.size()]));
+                            Map<String, Parameter> newParams = new HashMap<>();
+                            newParams.put(inputName, new Parameter.File(inputName, acceptedFiles.toArray(new File[acceptedFiles.size()])));
+                            newParams.put(contentTypeName, new Parameter.File(contentTypeName, acceptedContentTypes.toArray(new String[acceptedContentTypes.size()])));
+                            newParams.put(fileNameName, new Parameter.File(fileNameName, acceptedFileNames.toArray(new String[acceptedFileNames.size()])));
+                            ac.getParameters().appendAll(newParams);
                         }
                     }
                 } else {

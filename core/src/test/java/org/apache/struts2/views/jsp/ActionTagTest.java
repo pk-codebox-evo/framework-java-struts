@@ -33,12 +33,14 @@ import org.apache.struts2.TestAction;
 import org.apache.struts2.TestActionTagResult;
 import org.apache.struts2.TestConfigurationProvider;
 import org.apache.struts2.components.ActionComponent;
+import org.apache.struts2.dispatcher.HttpParameters;
 import org.apache.struts2.dispatcher.mapper.ActionMapper;
 import org.apache.struts2.dispatcher.mapper.DefaultActionMapper;
 
 import javax.servlet.jsp.JspException;
 import javax.servlet.jsp.PageContext;
 import java.util.HashMap;
+import java.util.Map;
 
 
 /**
@@ -210,7 +212,10 @@ public class ActionTagTest extends AbstractTagTest {
         tag.setName("testActionTagAction");
         tag.setExecuteResult(false);
         tag.setIgnoreContextParams(false);
-        ActionContext.getContext().getParameters().put("user", "Santa Claus");
+
+        Map<String, String[]> params = new HashMap<>();
+        params.put("user", new String[]{"Santa Claus"});
+        ActionContext.getContext().setParameters(HttpParameters.create(params).build());
 
         tag.doStartTag();
 
@@ -222,7 +227,7 @@ public class ActionTagTest extends AbstractTagTest {
         // check parameters, there should be one
         ActionInvocation ai = component.getProxy().getInvocation();
         ActionContext ac = ai.getInvocationContext();
-        assertEquals(1, ac.getParameters().size());
+        assertEquals(1, ac.getParameters().keySet().size());
     }
 
     public void testIngoreContextParamsTrue() throws Exception {
@@ -232,7 +237,10 @@ public class ActionTagTest extends AbstractTagTest {
         tag.setName("testActionTagAction");
         tag.setExecuteResult(false);
         tag.setIgnoreContextParams(true);
-        ActionContext.getContext().getParameters().put("user", "Santa Claus");
+
+        Map<String, String[]> params = new HashMap<>();
+        params.put("user", new String[] { "Santa Claus" });
+        ActionContext.getContext().setParameters(HttpParameters.create(params).build());
 
         tag.doStartTag();
 
@@ -244,7 +252,7 @@ public class ActionTagTest extends AbstractTagTest {
         // check parameters, there should be one
         ActionInvocation ai = component.getProxy().getInvocation();
         ActionContext ac = ai.getInvocationContext();
-        assertEquals(0, ac.getParameters().size());
+        assertEquals(0, ac.getParameters().keySet().size());
     }
 
     public void testNoNameDefined() throws Exception {
